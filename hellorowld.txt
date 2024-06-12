@@ -1,12 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "mpi.h"
-
-#define MAX_MSG_LENGTH 50
-#define MAX_MSG_COUNT 1000
-
-char messages[MAX_MSG_COUNT][MAX_MSG_LENGTH];
+#include <mpi.h>
 
 int main(int argc, char *argv[])
 {
@@ -16,29 +9,11 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int x;
-    for (x = 0; x < MAX_MSG_COUNT; x++){
-        sprintf(messages[x], "Soy el core nro. %d de %d\n", rank, size);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD); // Sincronizar todos los procesos antes de escribir al archivo
-
+    int x = 0;
     if (rank == 0) {
-        FILE *f = fopen("output.csv", "w");
-        if (f == NULL)
-        {
-            printf("Error abriendo el archivo!\n");
-            MPI_Finalize();
-            return 1;
+        for (x = 1; x < 1001; x++) {
+            printf("Soy el core nro. %d de %d: x = %d\n", rank, size, x);
         }
-
-        for (int i = 0; i < size; i++) {
-            for (x = 0; x < MAX_MSG_COUNT; x++) {
-                fprintf(f, "%s", messages[x]); // Escribe el mensaje en el archivo
-            }
-        }
-
-        fclose(f);
     }
 
     MPI_Finalize();
