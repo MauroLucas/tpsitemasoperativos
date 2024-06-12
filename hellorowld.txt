@@ -19,24 +19,28 @@ int main(int argc, char *argv[])
     int x;
     for (x = 0; x < MAX_MSG_COUNT; x++){
         sprintf(messages[x], "Soy el core nro. %d de %d\n", rank, size);
-        printf("%s", messages[x]); // Imprime el mensaje
     }
 
-    char filename[20];
-    sprintf(filename, "output_rank_%d.csv", rank);
-    FILE *f = fopen(filename, "w");
-    if (f == NULL)
-    {
-        printf("Error abriendo el archivo!\n");
-        MPI_Finalize();
-        return 1;
+    MPI_Barrier(MPI_COMM_WORLD); // Sincronizar todos los procesos antes de escribir al archivo
+
+    if (rank == 0) {
+        FILE *f = fopen("output.csv", "w");
+        if (f == NULL)
+        {
+            printf("Error abriendo el archivo!\n");
+            MPI_Finalize();
+            return 1;
+        }
+
+        for (int i = 0; i < size; i++) {
+            for (x = 0; x < MAX_MSG_COUNT; x++) {
+                fprintf(f, "%s", messages[x]); // Escribe el mensaje en el archivo
+            }
+        }
+
+        fclose(f);
     }
 
-    for (x = 0; x < MAX_MSG_COUNT; x++){
-        fprintf(f, "%s", messages[x]); // Escribe el mensaje en el archivo
-    }
-
-    fclose(f);
     MPI_Finalize();
     return 0;
 }
