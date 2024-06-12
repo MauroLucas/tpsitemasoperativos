@@ -4,5 +4,15 @@
 int main(int argc, char *argv[])
 {
     int rank, size;
-    MPI_Init(&)
+    MPI_Init(&argc, &argv);
+    
+    MPI_Comn_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comn_size(MPI_COMM_WORLD, &size);
+
+    int x=0;
+    for (x=1; x<1001; x++){
+        printf("Soy el core nro. %d de %d\n", rank, size);
+    }
+    MPI_Finalize();
+    return 0;
 }
