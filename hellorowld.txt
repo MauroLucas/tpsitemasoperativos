@@ -1,17 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "mpi.h"
 
-#define NUM_MESSAGES 1000
-#define MAX_STRING_LENGTH 50
+#define MAX_RECORDS 1000
+#define MAX_LINE_LENGTH 100
 
-void getCurrentTimestamp(char *buffer, int size) {
-    time_t rawtime;
-    struct tm * timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
+typedef struct {
+    int rank;
+    int size;
+    char timestamp[20];
+} Record;
+
+void get_timestamp(char *buffer, size_t buffer_size) {
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    strftime(buffer, buffer_size, "%Y-%m-%d %H:%M:%S", t);
 }
 
 int main(int argc, char *argv[]) {
@@ -21,30 +26,31 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    char messages[NUM_MESSAGES][MAX_STRING_LENGTH];
-    char timestamps[NUM_MESSAGES][MAX_STRING_LENGTH];
-
-    for (int x = 0; x < NUM_MESSAGES; x++) {
-        snprintf(messages[x], MAX_STRING_LENGTH, "Soy el core nro. %d de %d", rank, size);
-        getCurrentTimestamp(timestamps[x], MAX_STRING_LENGTH);
+    Record records[MAX_RECORDS];
+    int i;
+    for (i = 0; i < MAX_RECORDS; i++) {
+        records[i].rank = rank;
+        records[i].size = size;
+        get_timestamp(records[i].timestamp, sizeof(records[i].timestamp));
     }
 
-    // Write to CSV file
-    char filename[50];
-    snprintf(filename, sizeof(filename), "output_core_%d.csv", rank);
-    FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        MPI_Finalize();
-        return 1;
-    }
-
-    fprintf(file, "Message,Timestamp\n");
-    for (int x = 0; x < NUM_MESSAGES; x++) {
-        fprintf(file, "%s,%s\n", messages[x], timestamps[x]);
-    }
-
-    fclose(file);
     MPI_Finalize();
+
+    // Only the master node will write the data to a CSV file
+    if (rank == 0) {
+        FILE *fp = fopen("output.csv", "w");
+        if (fp == NULL) {
+            fprintf(stderr, "Error opening file for writing\n");
+            return 1;
+        }
+
+        fprintf(fp, "Rank,Size,Timestamp\n");
+        for (i = 0; i < MAX_RECORDS; i++) {
+            fprintf(fp, "%d,%d,%s\n", records[i].rank, records[i].size, records[i].timestamp);
+        }
+
+        fclose(fp);
+    }
+
     return 0;
 }
