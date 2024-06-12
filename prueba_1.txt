@@ -1,39 +1,26 @@
 #include <stdio.h>
 #include <mpi.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int rank, size;
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    srand(time(NULL) + rank); // Inicializa la semilla del generador de números aleatorios
+    // Abrir el archivo en modo escritura (cada proceso escribirá en el mismo archivo)
+    MPI_File fh;
+    MPI_File_open(MPI_COMM_WORLD, "output.csv", MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 
-    // Simulación de carga: cada proceso espera un tiempo aleatorio
-    int load = rand() % 10 + 1; // Carga simulada entre 1 y 10 segundos
-    printf("Soy el core nro. %d de %d, trabajando por %d segundos.\n", rank, size, load);
-    sleep(load);
+    // Escribir los datos en el archivo CSV
+    char buffer[100];
+    sprintf(buffer, "Soy el core nro. %d de %d\n", rank, size);
 
-    // Recopilar los tiempos de carga en el proceso raíz
-    int *all_loads = NULL;
-    if (rank == 0) {
-        all_loads = (int *)malloc(size * sizeof(int));
-    }
+    MPI_File_write(fh, buffer, strlen(buffer), MPI_CHAR, MPI_STATUS_IGNORE);
 
-    MPI_Gather(&load, 1, MPI_INT, all_loads, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    if (rank == 0) {
-        printf("Resumen de cargas:\n");
-        int i; // Declarar la variable fuera del bucle
-        for (i = 0; i < size; i++) {
-            printf("Core %d: %d segundos\n", i, all_loads[i]);
-        }
-        free(all_loads);
-    }
+    // Cerrar el archivo
+    MPI_File_close(&fh);
 
     MPI_Finalize();
     return 0;
