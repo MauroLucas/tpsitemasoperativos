@@ -1,56 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include "mpi.h"
-
-#define MAX_RECORDS 1000
-#define MAX_LINE_LENGTH 100
-
-typedef struct {
-    int rank;
-    int size;
-    char timestamp[20];
-} Record;
-
-void get_timestamp(char *buffer, size_t buffer_size) {
-    time_t now = time(NULL);
-    struct tm *t = localtime(&now);
-    strftime(buffer, buffer_size, "%Y-%m-%d %H:%M:%S", t);
-}
-
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int rank, size;
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    Record records[MAX_RECORDS];
-    int i;
-    for (i = 0; i < MAX_RECORDS; i++) {
-        records[i].rank = rank;
-        records[i].size = size;
-        get_timestamp(records[i].timestamp, sizeof(records[i].timestamp));
+    int x=0;
+    for (x=1; x<1001; x++){
+        printf("Soy el core nro. %d de %d\n", rank, size);
     }
-
     MPI_Finalize();
-
-    // Only the master node will write the data to a CSV file
-    if (rank == 0) {
-        FILE *fp = fopen("output.csv", "w");
-        if (fp == NULL) {
-            fprintf(stderr, "Error opening file for writing\n");
-            return 1;
-        }
-
-        fprintf(fp, "Rank,Size,Timestamp\n");
-        for (i = 0; i < MAX_RECORDS; i++) {
-            fprintf(fp, "%d,%d,%s\n", records[i].rank, records[i].size, records[i].timestamp);
-        }
-
-        fclose(fp);
-    }
-
     return 0;
 }
