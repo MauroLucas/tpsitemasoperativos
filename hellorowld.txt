@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "mpi.h"
 
 int main(int argc, char *argv[])
@@ -9,28 +10,32 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Nombre del archivo CSV
-    char filename[20];
-    sprintf(filename, "output_core_%d.csv", rank);
+    MPI_File fh;
+    MPI_Status status;
 
-    // Abrir archivo para escribir
-    FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        printf("Error al abrir el archivo!\n");
-        MPI_Finalize();
-        return 1;
+    // Nombre del archivo CSV
+    const char *filename = "output.csv";
+
+    // Abrir el archivo en modo de escritura
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);
+
+    // Escribir encabezado en el archivo CSV por el proceso 0
+    if (rank == 0) {
+        char header[] = "Iteracion,Rank,Size\n";
+        MPI_File_write_at(fh, 0, header, sizeof(header) - 1, MPI_CHAR, &status);
     }
 
-    // Escribir encabezado en el archivo CSV
-    fprintf(file, "Iteracion,Rank,Size\n");
+    MPI_Barrier(MPI_COMM_WORLD);  // Sincronizar todos los procesos antes de continuar
 
-    int x = 0;
+    int x;
+    char buffer[50];
     for (x = 1; x < 1001; x++) {
-        fprintf(file, "%d,%d,%d\n", x, rank, size);
+        int n = sprintf(buffer, "%d,%d,%d\n", x, rank, size);
+        MPI_File_write_shared(fh, buffer, n, MPI_CHAR, &status);
     }
 
     // Cerrar el archivo
-    fclose(file);
+    MPI_File_close(&fh);
 
     MPI_Finalize();
     return 0;
