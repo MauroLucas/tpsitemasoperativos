@@ -2,6 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[]) {
     int rank, size;
@@ -27,7 +28,8 @@ int main(int argc, char *argv[]) {
 
     if (rank == 0) {
         printf("Resumen de cargas:\n");
-        for (int i = 0; i < size; i++) {
+        int i; // Declarar la variable fuera del bucle
+        for (i = 0; i < size; i++) {
             printf("Core %d: %d segundos\n", i, all_loads[i]);
         }
         free(all_loads);
