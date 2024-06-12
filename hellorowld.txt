@@ -1,18 +1,50 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "mpi.h"
 
-int main(int argc, char *argv[])
-{
+#define NUM_MESSAGES 1000
+#define MAX_STRING_LENGTH 50
+
+void getCurrentTimestamp(char *buffer, int size) {
+    time_t rawtime;
+    struct tm * timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
+}
+
+int main(int argc, char *argv[]) {
     int rank, size;
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int x=0;
-    for (x=1; x<1001; x++){
-        printf("Soy el core nro. %d de %d\n", rank, size);
+    char messages[NUM_MESSAGES][MAX_STRING_LENGTH];
+    char timestamps[NUM_MESSAGES][MAX_STRING_LENGTH];
+
+    for (int x = 0; x < NUM_MESSAGES; x++) {
+        snprintf(messages[x], MAX_STRING_LENGTH, "Soy el core nro. %d de %d", rank, size);
+        getCurrentTimestamp(timestamps[x], MAX_STRING_LENGTH);
     }
+
+    // Write to CSV file
+    char filename[50];
+    snprintf(filename, sizeof(filename), "output_core_%d.csv", rank);
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        MPI_Finalize();
+        return 1;
+    }
+
+    fprintf(file, "Message,Timestamp\n");
+    for (int x = 0; x < NUM_MESSAGES; x++) {
+        fprintf(file, "%s,%s\n", messages[x], timestamps[x]);
+    }
+
+    fclose(file);
     MPI_Finalize();
     return 0;
 }
