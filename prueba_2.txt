@@ -3,13 +3,8 @@
 
 int main(int argc, char *argv[])
 {
-    int rank, size, name_len,i;
+    int rank, size, name_len;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
-    double start_time, end_time;
-    int sum = 0;
-
-    // Inicia el cronómetro antes de la inicialización de MPI
-    start_time = MPI_Wtime();
 
     MPI_Init(&argc, &argv);
 
@@ -17,20 +12,13 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Get_processor_name(processor_name, &name_len);
 
-    // Bucle for con incremento hasta 1 millón
-    for (i = 0; i < 1000000; i++) {
-        sum += i;
+    //printf("Soy el core nro. %d de %d, ejecutado en el nodo %s\n", rank, size, processor_name);
+
+    // Bucle de 0 a un millón que no hace nada
+    for (int i = 0; i < 1000000; i++) {
+        
     }
 
     MPI_Finalize();
-
-    // Detiene el cronómetro después de la finalización de MPI
-    end_time = MPI_Wtime();
-
-    // Solo el nodo frontend (nodo 0) imprime el tiempo total
-    if (rank == 0) {
-        printf("El tiempo total de procesamiento es %f segundos\n", end_time - start_time);
-    }
-
     return 0;
 }
