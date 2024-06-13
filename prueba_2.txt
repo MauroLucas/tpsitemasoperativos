@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-    int rank, size, name_len;
+    int rank, size, name_len, i;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     double start_time, end_time;
 
@@ -16,7 +16,9 @@ int main(int argc, char *argv[])
     // Inicia el cronómetro en todos los procesos
     start_time = MPI_Wtime();
 
-    printf("Soy el core nro. %d de %d, ejecutado en el nodo %s\n", rank, size, processor_name);
+    for (i = 0; i < 1000000; i++) {
+        
+    }
 
     // Detiene el cronómetro en todos los procesos
     end_time = MPI_Wtime();
