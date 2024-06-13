@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <mpi.h>
+
+int main(int argc, char *argv[])
+{
+    int rank, size, name_len;
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
+    double start_time, end_time;
+
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Get_processor_name(processor_name, &name_len);
+
+    // Inicia el cronómetro en todos los procesos
+    start_time = MPI_Wtime();
+
+    printf("Soy el core nro. %d de %d, ejecutado en el nodo %s\n", rank, size, processor_name);
+
+    // Detiene el cronómetro en todos los procesos
+    end_time = MPI_Wtime();
+
+    // Solo el nodo frontend (nodo 0) imprime el tiempo total
+    if (rank == 0) {
+        printf("El tiempo total de procesamiento es %f segundos\n", end_time - start_time);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
