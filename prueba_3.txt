@@ -1,20 +1,43 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <mpi.h>
 #include <unistd.h> // para la función sleep
 
+void handle_error(int errcode, char *str) {
+    char errmsg[MPI_MAX_ERROR_STRING];
+    int len;
+    MPI_Error_string(errcode, errmsg, &len);
+    fprintf(stderr, "%s: %s\n", str, errmsg);
+}
+
 int main(int argc, char *argv[])
 {
-    int rank, size, name_len;
+    int rank, size, name_len, errcode;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     int wait_time = 60; // tiempo de espera en segundos (1 minuto)
+    MPI_Errhandler custom_errhandler;
 
     MPI_Init(&argc, &argv);
+    MPI_Comm_create_errhandler((MPI_Handler_function *)handle_error, &custom_errhandler);
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, custom_errhandler);
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Get_processor_name(processor_name, &name_len);
+    errcode = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "Error en MPI_Comm_rank");
+
+    errcode = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "Error en MPI_Comm_size");
+
+    errcode = MPI_Get_processor_name(processor_name, &name_len);
+    if (errcode != MPI_SUCCESS) handle_error(errcode, "Error en MPI_Get_processor_name");
 
     printf("Soy el core nro. %d de %d, ejecutado en el nodo %s\n", rank, size, processor_name);
+
+    // Usar una barrera con tiempo de espera para detectar fallos en nodos
+    errcode = MPI_Barrier(MPI_COMM_WORLD);
+    if (errcode != MPI_SUCCESS) {
+        handle_error(errcode, "Error en MPI_Barrier - detectando fallo en nodo");
+        MPI_Abort(MPI_COMM_WORLD, errcode);
+    }
 
     sleep(wait_time); // espera por el tiempo especificado
 
