@@ -3,7 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-    int rank, size, name_len;
+    int rank, size, name_len, sum;
     char processor_name[MPI_MAX_PROCESSOR_NAME];
 
     MPI_Init(&argc, &argv);
@@ -14,9 +14,10 @@ int main(int argc, char *argv[])
 
     //printf("Soy el core nro. %d de %d, ejecutado en el nodo %s\n", rank, size, processor_name);
 
-    // Bucle de 0 a un millón que no hace nada
+    // Bucle de 0 a un millón 
+    sum = 0;
     for (int i = 0; i < 1000000; i++) {
-        
+        sum = sum + i;
     }
 
     MPI_Finalize();
